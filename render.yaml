@@ -5,6 +5,7 @@ services:
     plan: free
     branch: main
     rootDir: backend
+    healthCheckPath: /health
     buildCommand: "npm install"
     startCommand: "node src/server.js"
     envVars:
@@ -12,7 +13,5 @@ services:
         value: "20"
       - key: PUPPETEER_EXECUTABLE_PATH
         value: /usr/bin/google-chrome-stable
-    buildFilter:
-      paths:
-      - backend/**/*
-    healthCheckPath: /health
+    buildpacks:
+      - url: https://github.com/render-examples/puppeteer-chromium

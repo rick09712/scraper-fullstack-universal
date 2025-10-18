@@ -7,7 +7,7 @@ export default function App() {
   const [mode, setMode] = useState('auto');
   const [adapter, setAdapter] = useState('');
   const [goal, setGoal] = useState('');
-  
+  // O padrão agora é 'render' para a versão online funcionar.
   const [backend, setBackend] = useState('render');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -54,10 +54,10 @@ export default function App() {
     setError('');
     setResult(null);
 
-    
+    // ALTERAÇÃO FINAL: A URL do seu backend 100% funcional está aqui.
     const baseURL = {
       local: 'http://localhost:3000',
-      render: 'https://scraper-fullstack-universal.onrender.com'
+      render: 'https://scraper-backend-tap9.onrender.com'
     }[backend];
 
     try {

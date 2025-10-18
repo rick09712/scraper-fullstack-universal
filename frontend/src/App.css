@@ -1,0 +1,181 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f0f2f5;
+  color: #1c1e21;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.container {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  width: 100%;
+  max-width: 700px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #dddfe2;
+  padding-bottom: 16px;
+}
+
+header h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+header p {
+  color: #606770;
+  margin: 4px 0 0;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #606770;
+}
+
+.form-group-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-group-row .form-group {
+  flex: 1;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #dddfe2;
+  font-size: 16px;
+}
+
+input:disabled, select:disabled, button:disabled {
+  background-color: #e4e6eb;
+  cursor: not-allowed;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: none;
+  background-color: #1877f2;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+button:hover:not(:disabled) {
+  background-color: #166fe5;
+}
+
+.results-container {
+  margin-top: 24px;
+}
+
+.results-container h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #dddfe2;
+  padding-bottom: 8px;
+}
+
+.results-box {
+  background-color: #f7f7f7;
+  border: 1px solid #dddfe2;
+  border-radius: 6px;
+  padding: 16px;
+  min-height: 150px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.loading-message {
+  color: #606770;
+  text-align: center;
+}
+
+.error-message {
+  color: #d32f2f;
+  font-weight: bold;
+}
+
+.results-list {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.results-list-item {
+  margin-bottom: 12px;
+}
+
+.results-list-item a {
+  text-decoration: none;
+  color: #0c4a6e;
+  font-weight: 500;
+}
+
+.results-list-item a:hover {
+  text-decoration: underline;
+}
+
+.price-tag {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+footer {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #dddfe2;
+  color: #8a8d91;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 16px;
+  }
+
+  header h1 {
+    font-size: 22px;
+  }
+
+  .form-group-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .results-list-item a {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,16 @@
+# Arquivos de Dependências (gerados automaticamente)
+/frontend/node_modules/
+/backend/node_modules/
+
+# Arquivos de Ambiente (contêm segredos)
+/frontend/.env
+/backend/.env
+
+# Arquivos de Log e Debug
+/backend/debug_ml_content.html
+npm-debug.log
+yarn-error.log
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db

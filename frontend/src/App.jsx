@@ -7,7 +7,8 @@ export default function App() {
   const [mode, setMode] = useState('auto');
   const [adapter, setAdapter] = useState('');
   const [goal, setGoal] = useState('');
-  const [backend, setBackend] = useState('local');
+  // ALTERAÇÃO 1: O padrão agora é 'render' para a versão online funcionar.
+  const [backend, setBackend] = useState('render');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -53,9 +54,10 @@ export default function App() {
     setError('');
     setResult(null);
 
+    // ALTERAÇÃO 2: A URL do seu backend no Render foi inserida aqui.
     const baseURL = {
       local: 'http://localhost:3000',
-      render: 'https://SEU_BACKEND_RENDER.onrender.com'
+      render: 'https://scraper-backend-a540.onrender.com'
     }[backend];
 
     try {

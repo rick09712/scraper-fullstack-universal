@@ -4,13 +4,13 @@ services:
     runtime: node
     plan: free
     branch: main
-    rootDir: backend
+    rootDir: .  # raiz do repositório, pois o package.json está aqui
     healthCheckPath: /health
     buildCommand: "npm install"
     startCommand: "npm start"
     envVars:
       - key: NODE_VERSION
-        value: "20"
+        value: "22"
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: "true"
       - key: PUPPETEER_EXECUTABLE_PATH

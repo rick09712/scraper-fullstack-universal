@@ -13,7 +13,7 @@ export default function(htmlContent) {
 
   try {
     const preloadedState = JSON.parse(scriptContent);
-    // Este é o caminho correto para os resultados, baseado no seu arquivo HTML
+    
     const results = preloadedState.pageState.initialState.results;
 
     if (!results || !Array.isArray(results)) {

@@ -14,8 +14,8 @@ services:
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: "true"
       - key: PUPPETEER_EXECUTABLE_PATH
-        value: /usr/bin/google-chrome-stable
+        value: "/usr/bin/google-chrome-stable" 
+      - key: PUPPETEER_CHROMIUM_PATH_FALLBACK
+        value: "/usr/bin/chromium-browser" 
     buildpacks:
       - url: https://github.com/render-examples/puppeteer-chromium
-
-    

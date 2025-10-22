@@ -15,10 +15,8 @@ app.post('/scrape', async (req, res) => {
   
   try {
     const result = await scrape({ url, mode, adapter, goal });
-    
     const resultCount = Array.isArray(result) ? result.length : (result ? 1 : 0);
     console.log(`[Server] SUCESSO: Enviando ${resultCount} item(s) como resposta.`);
-
     res.json({ success: true, data: result });
   } catch (err) {
     console.error(`[Server] ERRO FATAL na rota /scrape para URL: ${url}`);

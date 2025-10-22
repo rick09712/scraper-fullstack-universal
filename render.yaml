@@ -6,8 +6,8 @@ services:
     branch: main
     rootDir: backend
     healthCheckPath: /health
-    buildCommand: "cd backend && npm install"
-    startCommand: "cd backend && node src/server.js"
+    buildCommand: "npm install"
+    startCommand: "npm start"
     envVars:
       - key: NODE_VERSION
         value: "20"

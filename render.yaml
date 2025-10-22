@@ -7,7 +7,7 @@ services:
     rootDir: backend
     healthCheckPath: /health
     buildCommand: "npm install"
-    startCommand: "node src/server.js"
+    startCommand: "npm start"
     envVars:
       - key: NODE_VERSION
         value: "20"
@@ -17,4 +17,3 @@ services:
         value: /usr/bin/google-chrome-stable
     buildpacks:
       - url: https://github.com/render-examples/puppeteer-chromium
-      

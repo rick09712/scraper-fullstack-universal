@@ -53,11 +53,12 @@ export default function App() {
     setLoading(true);
     setError('');
     setResult(null);
+    
 
     
     const baseURL = {
       local: 'http://localhost:3000',
-      render: 'https://scraper-backend-tap9.onrender.com'
+      render: 'https://scraper-fullstack-universal.onrender.com'
     }[backend];
 
     try {

@@ -26,7 +26,7 @@ export async function scrapeWithBrowser(url) {
   await page.setGeolocation({ latitude: 0, longitude: 0 });
 
   
-  await page.goto(url, { waitUntil: 'domcontentloaded' });  rápido
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); 
 
   
   try {

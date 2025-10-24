@@ -1,57 +1,54 @@
-import * as cheerio from 'cheerio';
+import axios from 'axios';
 
-export default function(htmlContent) {
+
+const API_URL = 'https://api.mercadolibre.com/sites/MLB/search';
+
+export default async function({ url }) {
   const products = [];
-  const $ = cheerio.load(htmlContent);
-
-  let scriptContent = $('#__PRELOADED_STATE__').html(); 
   
-  if (!scriptContent) {
-    return [];
-  }
+ 
+  const urlObj = new URL(url);
+  const query = urlObj.pathname.split('/').pop() || 'notebook'; 
 
   try {
-    const preloadedState = JSON.parse(scriptContent);
-    
-    
-    const results = preloadedState.pageState.results;
+    const response = await axios.get(API_URL, {
+      params: {
+        q: query, 
+        limit: 50 
+      },
+      headers: {
+        'Accept': 'application/json'
+      },
+      timeout: 10000
+    });
 
-    if (!results || !Array.isArray(results)) {
+    const results = response.data.results;
+
+    if (!results || results.length === 0) {
       return [];
     }
-    
+
     results.forEach(item => {
       
-      if (item.id === 'POLYCARD' && item.polycard && item.polycard.metadata) {
-        const { metadata, components } = item.polycard;
-
-        const titleComponent = components.find(c => c.type === 'title');
-        const priceComponent = components.find(c => c.type === 'price');
-
-        if (titleComponent && priceComponent && metadata.url) {
-          const title = titleComponent.title.text;
-          const link = metadata.url.startsWith('http') ? metadata.url : `https://www.${metadata.url}`;
-          
-          let priceValue = 0;
-          if (priceComponent.price && priceComponent.price.current_price) {
-            priceValue = priceComponent.price.current_price.value;
-          } else if (priceComponent.price && priceComponent.price.installments) {
-            
-             priceValue = priceComponent.price.installments.values.find(v => v.key === 'price_total')?.price?.value || 0;
-          }
-
-          const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceValue);
-
-          products.push({
-            title,
-            price,
-            link,
-          });
+      if (item.price && item.permalink) {
+        const title = item.title.trim();
+        
+        
+        let priceText = 'Preço não disponível';
+        if (item.price) {
+            priceText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: item.currency_id }).format(item.price);
         }
+
+        products.push({
+          title,
+          price: priceText,
+          link: item.permalink,
+        });
       }
     });
-  } catch (e) {
-    return [];
+
+  } catch (error) {
+    throw new Error(`Falha ao conectar ou processar a API do Mercado Livre: ${error.message}`);
   }
 
   return products;

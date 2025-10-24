@@ -22,23 +22,21 @@ export async function scrapeWithBrowser(url) {
 
   page.setDefaultNavigationTimeout(60000); 
   
-  
   await page.setGeolocation({ latitude: 0, longitude: 0 });
 
-  
   await page.goto(url, { waitUntil: 'domcontentloaded' }); 
 
   
   try {
-      
       await page.click('button[data-testid="cookie-consent-button"]', { timeout: 5000 });
-      await page.waitForTimeout(1000); 
+      
+      await new Promise(r => setTimeout(r, 1000)); 
   } catch (e) {
       
   }
 
   
-  await page.waitForTimeout(5000); 
+  await new Promise(r => setTimeout(r, 5000)); 
 
   const html = await page.content();
   await browser.close();

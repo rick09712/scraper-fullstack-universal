@@ -24,17 +24,34 @@ export async function scrapeWithBrowser(url) {
   
   await page.setGeolocation({ latitude: 0, longitude: 0 });
 
-  
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('.ui-search-layout__item', { timeout: 15000 }); 
+
   
+  await page.evaluate(() => {
+    const cookieButton = document.querySelector('button[data-testid="cookie-consent-button"]');
+    if (cookieButton) {
+      cookieButton.click();
+    }
+  });
+
+  
+  await page.evaluate(() => {
+    const cepModal = document.querySelector('.andes-tooltip__button-close');
+    if (cepModal) {
+      cepModal.click();
+    }
+  });
+
   
   try {
-      await page.click('button[data-testid="cookie-consent-button"]', { timeout: 5000 });
-      await new Promise(r => setTimeout(r, 500)); 
-  } catch (e) {
+      await page.waitForSelector('li.ui-search-layout__item', { timeout: 20000 });
+  } catch (error) {
       
+      throw new Error(`Waiting for selector .ui-search-layout__item failed: ${error.message}`);
   }
+
+  
+  await new Promise(r => setTimeout(r, 1000)); 
 
   const html = await page.content();
   await browser.close();

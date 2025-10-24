@@ -21,23 +21,40 @@ export async function scrapeWithBrowser(url) {
   );
 
   page.setDefaultNavigationTimeout(60000); 
-  
   await page.setGeolocation({ latitude: 0, longitude: 0 });
 
- 
   await page.goto(url, { waitUntil: 'domcontentloaded' });
-  
+
  
   await page.evaluate(() => {
+    
     const cookieButton = document.querySelector('button[data-testid="cookie-consent-button"]');
     if (cookieButton) {
       cookieButton.click();
+      return;
     }
-    const cepModal = document.querySelector('.andes-tooltip__button-close');
+    
+    
+    const cepModal = document.querySelector('.andes-tooltip-overlay');
     if (cepModal) {
-      cepModal.click();
+      cepModal.remove();
+    }
+    
+   
+    const cepBox = document.querySelector('.andes-tooltip--visible');
+    if (cepBox) {
+      cepBox.remove();
+    }
+    
+    
+    const cookieBanner = document.querySelector('.cookie-consent-banner');
+    if (cookieBanner) {
+        cookieBanner.remove();
     }
   });
+
+  
+  await new Promise(r => setTimeout(r, 3000)); 
 
   const html = await page.content();
   await browser.close();

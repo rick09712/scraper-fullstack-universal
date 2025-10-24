@@ -1,15 +1,27 @@
-import express from "express";
-import cors from "cors";
-import "dotenv/config";
+import express from 'express';
+import cors from 'cors';
+import 'dotenv/config';
+import { scrape } from './scraper.js';
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Backend rodando!");
+app.post('/scrape', async (req, res) => {
+  try {
+    const result = await scrape(req.body);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.listen(process.env.PORT || 10000, () => {
-  console.log(`Backend rodando na porta ${process.env.PORT || 10000}`);
+app.get('/', (req, res) => {
+  res.send('Backend rodando!');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Backend rodando na porta ${PORT}`);
 });

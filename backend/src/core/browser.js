@@ -21,13 +21,24 @@ export async function scrapeWithBrowser(url) {
   );
 
   
+  await page.setGeolocation({ latitude: 0, longitude: 0 });
+
+  
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
   
- 
+  
   try {
-      await page.waitForSelector('li.ui-search-layout__item', { timeout: 10000 });
-  } catch (error) {
      
+      await page.click('#newCookieDisclaimerButton', { timeout: 3000 });
+      await page.waitForTimeout(500); 
+  } catch (e) {
+      
+  }
+  
+  
+  try {
+      await page.waitForSelector('li.ui-search-layout__item', { timeout: 15000 });
+  } catch (error) {
       console.error('Timeout esperando o seletor de lista do Mercado Livre:', error.message);
   }
 

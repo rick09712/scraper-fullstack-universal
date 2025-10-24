@@ -1,16 +1,18 @@
-export default function($) {
-  const headlines = [];
-  const seenTitles = new Set();
-
-  $('a.feed-post-link').each((index, element) => {
-    const title = $(element).text().trim();
-    const link = $(element).attr('href');
+export default function({ $ }) {
+    const news = [];
     
-    if (title && link && !seenTitles.has(title)) {
-      seenTitles.add(title);
-      headlines.push({ title, link });
-    }
-  });
+    
+    $('.feed-post-body').each((i, el) => { 
+        const item = $(el);
 
-  return headlines;
+        const title = item.find('.feed-post-body-title a').text().trim();
+        const link = item.find('.feed-post-body-title a').attr('href');
+        const snippet = item.find('.feed-post-body-resumo').text().trim();
+
+        if (title && link) {
+            news.push({ title, link, snippet });
+        }
+    });
+
+    return news;
 }

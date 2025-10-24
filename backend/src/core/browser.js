@@ -1,5 +1,5 @@
 
-import puppeteer from 'puppeteer-extra'; 
+import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import chromium from '@sparticuz/chromium';
 
@@ -19,7 +19,18 @@ export async function scrapeWithBrowser(url) {
   await page.setUserAgent(
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
   );
+
+  
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+  
+ 
+  try {
+      await page.waitForSelector('li.ui-search-layout__item', { timeout: 10000 });
+  } catch (error) {
+     
+      console.error('Timeout esperando o seletor de lista do Mercado Livre:', error.message);
+  }
+
   const html = await page.content();
   await browser.close();
 

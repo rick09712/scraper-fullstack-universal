@@ -1,68 +1,60 @@
-import axios from 'axios';
+import * as cheerio from 'cheerio';
 
-const API_URL = 'https://api.mercadolivre.com/sites/MLB/search'; 
 
-export default async function({ url }) {
+export default async function({ html }) {
   const products = [];
-  let query = 'notebook';
   
-  try {
-    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-    
-    const pathParts = urlObj.pathname.split('/');
-    query = pathParts.pop() || pathParts.pop() || 'notebook';
-    
-    if (query.includes('_')) {
-        query = query.split('_')[0];
-    }
+  if (!html) {
+      return [];
+  }
+  
+  const $ = cheerio.load(html);
 
-  } catch (e) {
-    query = 'notebook';
+  
+  const scriptContent = $('#__PRELOADED_STATE__').html();
+  
+  if (!scriptContent) {
+    return [];
   }
 
   try {
-    const response = await axios.get(API_URL, {
-      params: {
-        q: query,
-        limit: 50
-      },
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Host': 'api.mercadolivre.com'
-      },
-      timeout: 15000 
-    });
+    const preloadedState = JSON.parse(scriptContent);
+    
+    const results = preloadedState.pageState.initialState.results;
 
-    const results = response.data.results;
-
-    if (!results || results.length === 0) {
+    if (!results || !Array.isArray(results)) {
       return [];
     }
-
+    
     results.forEach(item => {
-      if (item.price && item.permalink) {
-        const title = item.title.trim();
-        
-        let priceText = 'Preço não disponível';
-        if (item.price) {
-            priceText = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: item.currency_id }).format(item.price);
-        }
+      
+      if (item.id === 'POLYCARD' && item.polycard && item.polycard.metadata) {
+        const { metadata, components } = item.polycard;
 
-        products.push({
-          title,
-          price: priceText,
-          link: item.permalink,
-        });
+        const titleComponent = components.find(c => c.type === 'title');
+        const priceComponent = components.find(c => c.type === 'price');
+
+        if (titleComponent && priceComponent && metadata.url) {
+          const title = titleComponent.title.text;
+          const link = metadata.url.startsWith('http') ? metadata.url : `https://www.${metadata.url}`;
+          
+          let priceValue = 0;
+          if (priceComponent.price && priceComponent.price.current_price) {
+            priceValue = priceComponent.price.current_price.value;
+          }
+
+          const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceValue);
+
+          products.push({
+            title,
+            price,
+            link,
+          });
+        }
       }
     });
-
-  } catch (error) {
-    
-    if (error.message.includes('getaddrinfo ENOTFOUND')) {
-        throw new Error("O servidor de hospedagem (Render) não está conseguindo resolver o endereço da API do Mercado Livre. O problema está na rede do Render.");
-    }
-    throw new Error(`Falha ao conectar ou processar a API do Mercado Livre: ${error.message}`);
+  } catch (e) {
+    return [];
   }
 
   return products;

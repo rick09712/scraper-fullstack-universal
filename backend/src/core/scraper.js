@@ -1,3 +1,4 @@
+
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { scrapeWithBrowser } from './browser.js';
@@ -10,19 +11,16 @@ export async function scrape({ url, mode = 'auto', adapter, goal }) {
       return await scrapeWithAI(url, goal);
     }
 
+   
+    const isMercadoLivre = adapter === 'mercadolivre.com.br';
+
     
-    if (adapter && adapters[adapter] && adapters[adapter].constructor.name === 'AsyncFunction') {
-        const result = await adapters[adapter]({ url }); 
-        if (result && result.length > 0) return result;
-        
-        
-        if (mode !== 'auto') {
-            return result;
-        }
+    if (isMercadoLivre && mode === 'auto') {
+        mode = 'browser';
     }
 
     
-    if (mode === 'static' || mode === 'auto') {
+    if (mode === 'static' || (mode === 'auto' && !isMercadoLivre)) {
       try {
         const { data } = await axios.get(url, {
           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' },
@@ -31,8 +29,8 @@ export async function scrape({ url, mode = 'auto', adapter, goal }) {
         
         const $ = cheerio.load(data);
         
-     
-        if (adapter && adapters[adapter] && adapters[adapter].constructor.name !== 'AsyncFunction') {
+        
+        if (adapter && adapters[adapter]) {
             return adapters[adapter]({ $ }); 
         }
         
@@ -44,10 +42,10 @@ export async function scrape({ url, mode = 'auto', adapter, goal }) {
         if (mode === 'auto') {
           
           const html = await scrapeWithBrowser(url);
-          const $ = cheerio.load(html);
           
           if (adapter && adapters[adapter]) {
-            return adapters[adapter]({ $ });
+             
+              return adapters[adapter]({ html }); 
           }
           return { html };
         }
@@ -55,13 +53,13 @@ export async function scrape({ url, mode = 'auto', adapter, goal }) {
       }
     }
 
-  
+    
     if (mode === 'browser') {
       const html = await scrapeWithBrowser(url);
-      const $ = cheerio.load(html);
-
+      
       if (adapter && adapters[adapter]) {
-        return adapters[adapter]({ $ });
+        
+        return adapters[adapter]({ html });
       }
       return { html };
     }

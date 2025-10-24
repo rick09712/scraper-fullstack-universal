@@ -1,19 +1,15 @@
-import express from 'express';
-import 'dotenv/config'; 
+import express from "express";
+import cors from "cors";
+import "dotenv/config";
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-
-const PORT = process.env.PORT || 3000;
-
-
-const openaiKey = process.env.OPENAI_API_KEYS;
-const geminiKey = process.env.GEMINI_API_KEY;
-
-app.get('/', (req, res) => {
-  res.send('Backend rodando!');
+app.get("/", (req, res) => {
+  res.send("Backend rodando!");
 });
 
-app.listen(PORT, () => {
-  console.log(`Backend rodando na porta ${PORT}`);
+app.listen(process.env.PORT || 10000, () => {
+  console.log(`Backend rodando na porta ${process.env.PORT || 10000}`);
 });

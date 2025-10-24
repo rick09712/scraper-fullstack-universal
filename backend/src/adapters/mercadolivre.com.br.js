@@ -1,20 +1,34 @@
 import axios from 'axios';
 
-
-const API_URL = 'https://api.mercadolibre.com/sites/MLB/search';
+const API_URL = 'https://api.mercadolivre.com/sites/MLB/search';
 
 export default async function({ url }) {
   const products = [];
+  let query = 'notebook'; 
   
  
-  const urlObj = new URL(url);
-  const query = urlObj.pathname.split('/').pop() || 'notebook'; 
+  try {
+    const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+    
+    
+    const pathParts = urlObj.pathname.split('/');
+    query = pathParts.pop() || pathParts.pop() || 'notebook';
+    
+    
+    if (query.includes('_')) {
+        
+        query = query.split('_')[0];
+    }
+
+  } catch (e) {
+    
+    query = 'notebook';
+  }
 
   try {
     const response = await axios.get(API_URL, {
       params: {
-        q: query, 
-        limit: 50 
+        q: query
       },
       headers: {
         'Accept': 'application/json'
@@ -29,10 +43,8 @@ export default async function({ url }) {
     }
 
     results.forEach(item => {
-      
       if (item.price && item.permalink) {
         const title = item.title.trim();
-        
         
         let priceText = 'Preço não disponível';
         if (item.price) {

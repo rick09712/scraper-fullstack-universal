@@ -5,71 +5,30 @@ export default function(htmlContent) {
   const $ = cheerio.load(htmlContent);
 
   
-  let scriptContent = null;
-  
-  
-  scriptContent = $('#__PRELOADED_STATE__').html(); 
-  
-  
-  if (!scriptContent) {
-    $('script').each((i, el) => {
-      const currentScript = $(el).html();
-     
-      if (currentScript && currentScript.includes('window.__PRELOADED_STATE__')) {
-       
-        scriptContent = currentScript.split('window.__PRELOADED_STATE__ = ')[1]?.split(';')[0]?.trim();
-        return false; 
-      }
-    });
-  }
+  $('.ui-search-layout__item').each((i, el) => {
+    const item = $(el);
 
-  if (!scriptContent) {
-    console.log('[Adapter ML] Erro Fatal: O bloco de dados (JSON) não foi encontrado no HTML.');
-    return [];
-  }
-
-  try {
-    const preloadedState = JSON.parse(scriptContent);
+   
+    const titleElement = item.find('.poly-component__title');
     
     
-    const results = preloadedState.pageState?.initialState?.results || preloadedState.pageState?.search_results?.results;
+    const link = titleElement.attr('href');
+    
+    
+    const priceElement = item.find('.andes-money-amount__fraction');
+    
+    const title = titleElement.text().trim();
+    const price = priceElement.length ? `R$ ${priceElement.text().trim()}` : 'Preço não encontrado';
 
-    if (!results || !Array.isArray(results)) {
-      console.log('[Adapter ML] Erro: A chave "results" não foi encontrada no caminho correto.');
-      return [];
+    
+    if (title && link) {
+      products.push({
+        title,
+        price,
+        link,
+      });
     }
-    
-    
-    results.forEach(item => {
-      if (item.id === 'POLYCARD' && item.polycard && item.polycard.metadata) {
-        const { metadata, components } = item.polycard;
-
-        const titleComponent = components.find(c => c.type === 'title');
-        const priceComponent = components.find(c => c.type === 'price');
-
-        if (titleComponent && priceComponent && metadata.url) {
-          const title = titleComponent.title.text;
-          const link = metadata.url.startsWith('http') ? metadata.url : `https://www.${metadata.url}`;
-          
-          let priceValue = 0;
-          if (priceComponent.price && priceComponent.price.current_price) {
-            priceValue = priceComponent.price.current_price.value;
-          }
-
-          const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceValue);
-
-          products.push({
-            title,
-            price,
-            link,
-          });
-        }
-      }
-    });
-  } catch (e) {
-    console.error(`[Adapter ML] Erro crítico ao processar o JSON: ${e.message}`);
-    return [];
-  }
+  });
 
   return products;
 }

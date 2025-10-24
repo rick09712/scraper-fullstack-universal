@@ -4,22 +4,41 @@ export default function(htmlContent) {
   const products = [];
   const $ = cheerio.load(htmlContent);
 
-  const scriptContent = $('#__PRELOADED_STATE__').html();
+  
+  let scriptContent = null;
+  
+  
+  scriptContent = $('#__PRELOADED_STATE__').html(); 
+  
   
   if (!scriptContent) {
-    console.log('[Adapter ML] Erro Fatal: O script __PRELOADED_STATE__ não foi encontrado no HTML.');
+    $('script').each((i, el) => {
+      const currentScript = $(el).html();
+     
+      if (currentScript && currentScript.includes('window.__PRELOADED_STATE__')) {
+       
+        scriptContent = currentScript.split('window.__PRELOADED_STATE__ = ')[1]?.split(';')[0]?.trim();
+        return false; 
+      }
+    });
+  }
+
+  if (!scriptContent) {
+    console.log('[Adapter ML] Erro Fatal: O bloco de dados (JSON) não foi encontrado no HTML.');
     return [];
   }
 
   try {
     const preloadedState = JSON.parse(scriptContent);
     
-    const results = preloadedState.pageState.initialState.results;
+    
+    const results = preloadedState.pageState?.initialState?.results || preloadedState.pageState?.search_results?.results;
 
     if (!results || !Array.isArray(results)) {
-      console.log('[Adapter ML] Erro: A chave "results" não foi encontrada no caminho correto (pageState.initialState.results).');
+      console.log('[Adapter ML] Erro: A chave "results" não foi encontrada no caminho correto.');
       return [];
     }
+    
     
     results.forEach(item => {
       if (item.id === 'POLYCARD' && item.polycard && item.polycard.metadata) {
@@ -48,10 +67,9 @@ export default function(htmlContent) {
       }
     });
   } catch (e) {
-    console.error('[Adapter ML] Erro crítico ao processar o JSON:', e.message);
+    console.error(`[Adapter ML] Erro crítico ao processar o JSON: ${e.message}`);
     return [];
   }
 
-  console.log(`[Adapter ML] Análise finalizada. Produtos extraídos com sucesso: ${products.length}`);
   return products;
 }

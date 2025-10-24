@@ -4,31 +4,55 @@ export default function(htmlContent) {
   const products = [];
   const $ = cheerio.load(htmlContent);
 
+  let scriptContent = $('#__PRELOADED_STATE__').html(); 
   
-  const itemSelector = 'li.ui-search-layout__item'; 
+  if (!scriptContent) {
+    return [];
+  }
 
-  $(itemSelector).each((i, el) => {
-    const item = $(el);
+  try {
+    const preloadedState = JSON.parse(scriptContent);
+    
+    
+    const results = preloadedState.pageState.results;
 
-    
-    const titleLinkElement = item.find('a.poly-component__title');
-    
-    const title = titleLinkElement.text().trim();
-    const link = titleLinkElement.attr('href');
-    
-   
-    const priceElement = item.find('.andes-money-amount__fraction').first();
-    const price = priceElement.length ? `R$ ${priceElement.text().trim()}` : 'Preço não encontrado';
-
-    
-    if (title && link) {
-      products.push({
-        title,
-        price,
-        link,
-      });
+    if (!results || !Array.isArray(results)) {
+      return [];
     }
-  });
+    
+    results.forEach(item => {
+      
+      if (item.id === 'POLYCARD' && item.polycard && item.polycard.metadata) {
+        const { metadata, components } = item.polycard;
+
+        const titleComponent = components.find(c => c.type === 'title');
+        const priceComponent = components.find(c => c.type === 'price');
+
+        if (titleComponent && priceComponent && metadata.url) {
+          const title = titleComponent.title.text;
+          const link = metadata.url.startsWith('http') ? metadata.url : `https://www.${metadata.url}`;
+          
+          let priceValue = 0;
+          if (priceComponent.price && priceComponent.price.current_price) {
+            priceValue = priceComponent.price.current_price.value;
+          } else if (priceComponent.price && priceComponent.price.installments) {
+            
+             priceValue = priceComponent.price.installments.values.find(v => v.key === 'price_total')?.price?.value || 0;
+          }
+
+          const price = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(priceValue);
+
+          products.push({
+            title,
+            price,
+            link,
+          });
+        }
+      }
+    });
+  } catch (e) {
+    return [];
+  }
 
   return products;
 }

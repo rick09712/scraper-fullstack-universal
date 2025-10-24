@@ -24,19 +24,17 @@ export async function scrapeWithBrowser(url) {
   
   await page.setGeolocation({ latitude: 0, longitude: 0 });
 
-  await page.goto(url, { waitUntil: 'domcontentloaded' }); 
-
+  
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.ui-search-layout__item', { timeout: 15000 }); 
+  
   
   try {
       await page.click('button[data-testid="cookie-consent-button"]', { timeout: 5000 });
-      
-      await new Promise(r => setTimeout(r, 1000)); 
+      await new Promise(r => setTimeout(r, 500)); 
   } catch (e) {
       
   }
-
-  
-  await new Promise(r => setTimeout(r, 5000)); 
 
   const html = await page.content();
   await browser.close();

@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-
 const API_URL = 'https://api.mercadolivre.com/sites/MLB/search'; 
 
 export default async function({ url }) {
@@ -27,11 +26,9 @@ export default async function({ url }) {
         q: query,
         limit: 50
       },
-     
       headers: {
         'Accept': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        
         'Host': 'api.mercadolivre.com'
       },
       timeout: 15000 
@@ -42,8 +39,6 @@ export default async function({ url }) {
     if (!results || results.length === 0) {
       return [];
     }
-    
-   
 
     results.forEach(item => {
       if (item.price && item.permalink) {
@@ -65,7 +60,7 @@ export default async function({ url }) {
   } catch (error) {
     
     if (error.message.includes('getaddrinfo ENOTFOUND')) {
-        throw new Error("Falha no processo de scraping: O servidor de hospedagem (Render) não está conseguindo resolver o endereço da API do Mercado Livre. O problema está na rede do Render.");
+        throw new Error("O servidor de hospedagem (Render) não está conseguindo resolver o endereço da API do Mercado Livre. O problema está na rede do Render.");
     }
     throw new Error(`Falha ao conectar ou processar a API do Mercado Livre: ${error.message}`);
   }

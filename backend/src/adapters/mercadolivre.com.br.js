@@ -1,39 +1,36 @@
 import axios from 'axios';
 
-const API_URL = 'https://api.mercadolivre.com/sites/MLB/search';
+
+const API_URL = 'https://api.mercadolibre.com/sites/MLB/search'; 
 
 export default async function({ url }) {
   const products = [];
   let query = 'notebook'; 
   
- 
   try {
     const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
-    
     
     const pathParts = urlObj.pathname.split('/');
     query = pathParts.pop() || pathParts.pop() || 'notebook';
     
-    
     if (query.includes('_')) {
-        
         query = query.split('_')[0];
     }
 
   } catch (e) {
-    
     query = 'notebook';
   }
 
   try {
     const response = await axios.get(API_URL, {
       params: {
-        q: query
+        q: query,
+        limit: 50
       },
       headers: {
         'Accept': 'application/json'
       },
-      timeout: 10000
+      timeout: 15000 
     });
 
     const results = response.data.results;
@@ -60,6 +57,7 @@ export default async function({ url }) {
     });
 
   } catch (error) {
+    
     throw new Error(`Falha ao conectar ou processar a API do Mercado Livre: ${error.message}`);
   }
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import { scrape } from './scraper.js';
+import { scrape } from './core/scraper.js';
 
 const app = express();
 

@@ -1,6 +1,7 @@
 # Arquivos de Dependências (gerados automaticamente)
 /frontend/node_modules/
 /backend/node_modules/
+/node_modules/ # Adicionando o caso de haver um node_modules na raiz
 
 # Arquivos de Ambiente (contêm segredos)
 /frontend/.env
@@ -8,9 +9,16 @@
 
 # Arquivos de Log e Debug
 /backend/debug_ml_content.html
-npm-debug.log
+/backend/debug_ml_error_screenshot.png # Adicionando o screenshot de erro do Puppeteer, se houver
+npm-debug.log*
 yarn-error.log
 
 # Arquivos de Sistema Operacional
 .DS_Store
 Thumbs.db
+
+# Adicionando arquivos de cache para garantir builds limpos
+package-lock.json
+/frontend/package-lock.json
+/backend/package-lock.json
+yarn.lock

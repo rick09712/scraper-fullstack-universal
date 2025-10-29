@@ -1,49 +1,125 @@
-import dotenv from 'dotenv';
+import { OpenAI } from 'openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { scrapeWithBrowser } from '../core/browser.js';
+import * as cheerio from 'cheerio';
+import * as fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function extractWithGemini(apiKey, html, goal) {
-  if (!apiKey) {
-    throw new Error('Nenhuma chave da Gemini API fornecida.');
-  }
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-    const prompt = `Analise o seguinte código HTML e extraia os dados conforme o objetivo. Retorne APENAS o array JSON, sem nenhum texto, explicação ou formatação extra como \`\`\`json. O JSON deve ser a única coisa na sua resposta.\n\nOBJETIVO: ${goal}\n\nHTML:\n${html}`;
+const OPENAI_API_KEY = "sk-proj-lfC6-yiyHoyAgQx6YYoE6HJxCO62CR-yFUgVhvSKuU_6_YpJBfa2cQ6nkmC5ZoA";
+const GEMINI_API_KEY = "AIzaSyDZSGIa8CVm_onrvjiyEH6WitSl5-jOuTQ";
+
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);
+
+async function extractContent(url) {
+    const debugPath = path.resolve(__dirname, '..', '..', 'debug_ai_content.html');
     
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    return JSON.parse(cleanJson);
+    let html = null;
+    try {
+        const browserResult = await scrapeWithBrowser(url);
+        html = browserResult.html;
+    } catch (e) {
+        const axios = (await import('axios')).default;
+        const response = await axios.get(url, { headers: { 'User-Agent': 'scraper-bot/1.0' } });
+        html = response.data;
+    }
 
-  } catch (error) {
-    console.error(`[AI Extractor] Erro com a Gemini API: ${error.message}`);
-    throw new Error('Falha ao extrair dados do HTML com a Gemini API.');
-  }
+    if (!html) return '';
+
+    await fs.writeFile(debugPath, html);
+
+    const $ = cheerio.load(html);
+    
+    $('script, style, header, footer, nav, img, a').remove();
+    const mainContent = $('body').text().replace(/\s\s+/g, ' ').trim().slice(0, 15000);
+    return mainContent;
+}
+
+async function useOpenAI(content, goal) {
+    const prompt = `Você é um Web Scraper experiente. Sua tarefa é extrair dados brutos de uma página web.
+    URL: ${content.url}
+    HTML (Texto Principal): ${content.mainContent}
+    
+    Seu objetivo: ${goal}
+    
+    Regras de Saída:
+    1. A saída DEVE ser um objeto JSON válido.
+    2. Não inclua texto introdutório ou explicativo (apenas o JSON puro).
+    3. Use a formatação do JSON para representar os dados extraídos.`;
+
+    const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" }
+    });
+
+    const jsonString = response.choices[0].message.content.trim();
+    return JSON.parse(jsonString);
+}
+
+async function useGemini(content, goal) {
+    const prompt = `Você é um Web Scraper experiente. Sua tarefa é extrair dados brutos de uma página web.
+    URL: ${content.url}
+    HTML (Texto Principal): ${content.mainContent}
+    
+    Seu objetivo: ${goal}
+    
+    Regras de Saída:
+    1. A saída DEVE ser um objeto JSON válido.
+    2. Não inclua texto introdutório ou explicativo (apenas o JSON puro).
+    3. Use a formatação do JSON para representar os dados extraídos.`;
+
+    const response = await gemini.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    properties: {
+                        title: { type: 'string' },
+                        price: { type: 'string' },
+                        link: { type: 'string' },
+                        extra: { type: 'string' }
+                    },
+                    required: ['title']
+                }
+            }
+        }
+    });
+
+    const jsonString = response.text.trim();
+    return JSON.parse(jsonString);
 }
 
 export async function scrapeWithAI(url, goal) {
-    const geminiApiKey = process.env.GEMINI_API_KEY || '';
-  
-    if (geminiApiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-        const prompt = `Extraia os seguintes dados da URL e retorne APENAS o JSON resultante.\nURL: ${url}\nObjetivo: ${goal}`;
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-        const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-        return JSON.parse(cleanJson);
-      } catch (error) {
-        throw new Error(`A API da IA falhou. Detalhe: ${error.message}`);
-      }
+    const content = { url, mainContent: await extractContent(url) };
+    
+    let result = null;
+    let lastError = null;
+
+    // 1. Tenta OpenAI
+    try {
+        result = await useOpenAI(content, goal);
+        return result;
+    } catch (error) {
+        lastError = error;
     }
     
-    throw new Error('Nenhuma chave de API da IA foi configurada corretamente.');
-}
+   
+    try {
+        result = await useGemini(content, goal);
+        return result;
+    } catch (error) {
+        lastError = error;
+    }
 
-export { extractWithGemini };
+    // Se ambos falharem
+    throw new Error(`Ambas as APIs de IA (GPT e Gemini) falharam. Último erro: ${lastError.message}`);
+}

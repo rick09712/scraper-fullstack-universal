@@ -3,14 +3,16 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { scrapeWithBrowser } from './browser.js';
 import adapters from '../adapters/index.js';
-import { scrapeWithAI } from '../utils/ai.js';
 
-export async function scrape({ url, mode = 'auto', adapter, goal }) {
+const AI_MODULE = await import('../utils/ai.js').catch(e => ({ scrapeWithAI: () => { throw new Error(`IA Desabilitada: ${e.message}`) } }));
+
+export async function scrape({ url, mode='auto', adapter, goal }) {
   try {
+    const scrapeWithAI = AI_MODULE.scrapeWithAI;
+
     if (mode === 'ai') {
       return await scrapeWithAI(url, goal);
     }
-
    
     const isMercadoLivre = adapter === 'mercadolivre.com.br';
 

@@ -8,7 +8,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 const isProduction = process.env.NODE_ENV === 'production';
 
 const blockedResourceTypes = ['image', 'media', 'font', 'ping', 'other'];
@@ -27,66 +26,39 @@ const skippedDomains = [
 
 export async function scrapeWithBrowser(url, adapterName) {
   console.log('[Browser] Lançando navegador camuflado...');
+
   let browser = null;
   let page = null;
 
   try {
-  
-    let executablePath;
-    let launchArgs = [
+   
+    const executablePath = await chromium.executablePath();
+    const launchArgs = [
       ...chromium.args,
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--window-size=1920x1080'
     ];
-    let headlessMode = chromium.headless;
-
-    if (isProduction) {
-      console.log('[Browser] Usando Chromium otimizado para produção.');
-      executablePath = await chromium.executablePath();
-      launchArgs.push(
-        '--single-process',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      );
-    } else {
-      let localPath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-      if (!await fs.stat(localPath).catch(() => null)) {
-        localPath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-      }
-
-      if (await fs.stat(localPath).catch(() => null)) {
-        console.log('[Browser] Usando Chrome local.');
-        executablePath = localPath;
-      } else {
-        console.log('[Browser] Aviso: Chrome local não encontrado. Usando Chromium padrão.');
-        executablePath = await chromium.executablePath();
-        headlessMode = 'new';
-      }
-
-      launchArgs = ['--no-sandbox', '--disable-setuid-sandbox'];
-      headlessMode = 'new';
-    }
-
 
     browser = await puppeteer.launch({
       executablePath,
-      headless: headlessMode,
+      headless: chromium.headless,
       args: launchArgs,
       ignoreHTTPSErrors: true,
       defaultViewport: chromium.defaultViewport,
     });
 
     page = await browser.newPage();
+
+    
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
     );
     await page.setViewport({ width: 1920, height: 1080 });
-    await page.setRequestInterception(true);
 
+   
+    await page.setRequestInterception(true);
     page.on('request', (req) => {
       const resourceType = req.resourceType();
       const requestUrl = req.url();
@@ -104,7 +76,7 @@ export async function scrapeWithBrowser(url, adapterName) {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
     console.log('[Browser] Navegação concluída.');
 
-    
+   
     try {
       const cookieButtonSelector = 'button[data-testid="action:understood-button"]';
       await page.waitForSelector(cookieButtonSelector, { timeout: 5000 });
@@ -112,6 +84,7 @@ export async function scrapeWithBrowser(url, adapterName) {
       console.log('[Browser] Banner de cookies fechado.');
     } catch {}
 
+   
     try {
       const cepCloseButtonSelector = 'button[aria-label*="Fechar"], button.andes-button--secondary';
       await page.waitForSelector(cepCloseButtonSelector, { timeout: 5000 });
@@ -121,24 +94,23 @@ export async function scrapeWithBrowser(url, adapterName) {
 
     await new Promise(r => setTimeout(r, 1000));
 
-    
     const mainSelector = '.ui-search-layout__item';
     try {
       await page.waitForSelector(mainSelector, { timeout: 15000 });
-      console.log('[Browser] Seletor encontrado com sucesso!');
+      console.log('[Browser] Seletor principal encontrado.');
     } catch (e) {
       console.error(`[Browser] Erro ao esperar pelo seletor principal: ${e.message}`);
     }
 
     const htmlContent = await page.content();
 
-   
+    
     if (adapterName === 'mercadolivre.com.br' && !isProduction) {
       const htmlPath = path.resolve(__dirname, '..', 'debug_ml_content.html');
       await fs.writeFile(htmlPath, htmlContent);
     }
 
-  
+    
     if (adapterName) {
       const adapterModule = await import(`../adapters/${adapterName}.js`);
       const adapter = adapterModule.default;
@@ -154,7 +126,7 @@ export async function scrapeWithBrowser(url, adapterName) {
         await page.screenshot({ path: errorScreenshotPath, fullPage: true });
       } catch {}
     }
-    throw new Error(`Falha ao carregar ou processar a URL com o navegador: ${error.message}`);
+    throw new Error(`Falha ao carregar ou processar a URL: ${error.message}`);
   } finally {
     if (browser) await browser.close();
   }

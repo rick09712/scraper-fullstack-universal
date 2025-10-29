@@ -1,21 +1,30 @@
 services:
+  # Backend Node.js com Puppeteer
   - type: web
     name: scraper-backend
     runtime: node
     plan: free
     branch: main
-    rootDir: .  # raiz do repositório, pois o package.json está aqui
+    rootDir: backend  # pasta do backend
     healthCheckPath: /health
     buildCommand: "npm install"
     startCommand: "npm start"
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"
-      - key: PUPPETEER_EXECUTABLE_PATH
-        value: "/usr/bin/google-chrome-stable"
-      - key: PUPPETEER_CHROMIUM_PATH_FALLBACK
-        value: "/usr/bin/chromium-browser"
     buildpacks:
       - url: https://github.com/render-examples/puppeteer-chromium
+
+  # Frontend Vite
+  - type: web
+    name: scraper-frontend
+    runtime: node
+    plan: free
+    branch: main
+    rootDir: frontend  # pasta do frontend
+    buildCommand: "npm install && npm run build"
+    startCommand: "npm run preview"
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+    publishDirectory: dist

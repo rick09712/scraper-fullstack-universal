@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-extra';
+import puppeteer from 'puppeteer-core';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import chromium from '@sparticuz/chromium';
 import fs from 'fs/promises';
@@ -8,7 +8,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-puppeteer.use(StealthPlugin());
+
+if (process.env.NODE_ENV !== "production") {
+    puppeteer.use(StealthPlugin());
+}
+
 
 const blockedResourceTypes = [
     'image',
@@ -36,31 +40,45 @@ export async function scrapeWithBrowser(url, adapterName) {
     let browser = null;
     let page = null;
     try {
-        let chromeExecutablePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
         
-        if (!await fs.stat(chromeExecutablePath).catch(() => null)) {
-            chromeExecutablePath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
-        }
+        const isProduction = process.env.NODE_ENV === 'production';
+        let executablePath;
+        let launchArgs = [...chromium.args, '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--window-size=1920x1080'];
+        let headlessMode = chromium.headless;
         
-        if (!await fs.stat(chromeExecutablePath).catch(() => null)) {
-             console.log('[Browser] Aviso: Não foi encontrado o Chrome local. Tentando o Chromium padrão...');
-             chromeExecutablePath = await chromium.executablePath(); 
-        }
+        if (isProduction) {
+           
+            console.log('[Browser] Usando Chromium otimizado para produção.');
+            executablePath = await chromium.executablePath();
+            
+            launchArgs.push('--single-process', '--disable-accelerated-2d-canvas', '--no-first-run', '--no-zygote', '--disable-gpu');
 
+        } else {
+         
+            let localPath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+            
+           
+            if (!await fs.stat(localPath).catch(() => null)) {
+                localPath = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+            }
+            
+            if (await fs.stat(localPath).catch(() => null)) {
+                console.log('[Browser] Usando Chrome local.');
+                executablePath = localPath;
+            } else {
+                console.log('[Browser] Aviso: Não foi encontrado o Chrome local. Usando Chromium padrão do Puppeteer.');
+               
+                executablePath = await chromium.executablePath(); 
+                headlessMode = 'new'; 
+            }
+            launchArgs = ['--no-sandbox', '--disable-setuid-sandbox'];
+            headlessMode = 'new';
+        }
+        
         browser = await puppeteer.launch({
-            executablePath: chromeExecutablePath,
-            headless: chromium.headless,
-            args: [
-                ...chromium.args,
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--disable-gpu',
-                '--window-size=1920x1080'
-            ],
+            executablePath: executablePath,
+            headless: headlessMode,
+            args: launchArgs,
             ignoreHTTPSErrors: true,
             defaultViewport: chromium.defaultViewport,
         });
@@ -86,6 +104,8 @@ export async function scrapeWithBrowser(url, adapterName) {
         await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
         console.log('[Browser] Navegação concluída.');
 
+        
+        
         try {
             console.log('[Browser] Procurando botão de cookies...');
             const cookieButtonSelector = 'button[data-testid="action:understood-button"]';
@@ -106,7 +126,7 @@ export async function scrapeWithBrowser(url, adapterName) {
             
         }
     
-       await new Promise(r => setTimeout(r, 1000));
+        await new Promise(r => setTimeout(r, 1000));
 
         const mainSelector = '.ui-search-layout__item';
         console.log(`Aguardando pelo seletor: "${mainSelector}"`);
@@ -121,7 +141,10 @@ export async function scrapeWithBrowser(url, adapterName) {
         
         if (adapterName === 'mercadolivre.com.br') {
             const htmlPath = path.resolve(__dirname, '..', 'debug_ml_content.html');
-            await fs.writeFile(htmlPath, htmlContent);
+           
+            if (!isProduction) {
+                 await fs.writeFile(htmlPath, htmlContent);
+            }
         }
 
         if (adapterName) {
@@ -134,10 +157,14 @@ export async function scrapeWithBrowser(url, adapterName) {
         return { html: htmlContent };
 
     } catch (error) {
+      
         if (page) {
             try {
                 const errorScreenshotPath = path.resolve(__dirname, '..', 'debug_ml_error_screenshot.png');
-                await page.screenshot({ path: errorScreenshotPath, fullPage: true });
+                
+                if (!isProduction) {
+                    await page.screenshot({ path: errorScreenshotPath, fullPage: true });
+                }
             } catch (ssError) {
                 
             }

@@ -9,8 +9,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const OPENAI_API_KEY = "sk-proj-lfC6-yiyHoyAgQx6YYoE6HJxCO62CR-yFUgVhvSKuU_6_YpJBfa2cQ6nkmC5ZoA";
-const GEMINI_API_KEY = "AIzaSyDZSGIa8CVm_onrvjiyEH6WitSl5-jOuTQ";
+const OPENAI_API_KEY = "";
+const GEMINI_API_KEY = "";
 
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const gemini = new GoogleGenerativeAI(GEMINI_API_KEY);

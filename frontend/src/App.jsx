@@ -57,7 +57,10 @@ export default function App() {
         setError('');
         setResult(null);
 
-        const baseURL = 'https://scraper-fullstack-universal.onrender.com'; 
+       const baseURL =
+  import.meta.env.MODE === 'development'
+    ? 'http://localhost:3000' 
+    : 'https://scraper-fullstack-universal.onrender.com';
 
         try {
             const payload = { url, mode };

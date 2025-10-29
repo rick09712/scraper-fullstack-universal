@@ -1,5 +1,4 @@
-import puppeteer from 'puppeteer-core';
-import chromium from '@sparticuz/chromium';
+import puppeteer from 'puppeteer';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import fs from 'fs/promises';
 import path from 'path';
@@ -31,33 +30,20 @@ export async function scrapeWithBrowser(url, adapterName) {
   let page = null;
 
   try {
-   
-    const executablePath = await chromium.executablePath();
-    const launchArgs = [
-      ...chromium.args,
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--window-size=1920x1080'
-    ];
-
+    
+    puppeteer.use(StealthPlugin());
     browser = await puppeteer.launch({
-      executablePath,
-      headless: chromium.headless,
-      args: launchArgs,
-      ignoreHTTPSErrors: true,
-      defaultViewport: chromium.defaultViewport,
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     page = await browser.newPage();
 
-    
     await page.setUserAgent(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36'
     );
     await page.setViewport({ width: 1920, height: 1080 });
 
-   
     await page.setRequestInterception(true);
     page.on('request', (req) => {
       const resourceType = req.resourceType();
@@ -76,7 +62,7 @@ export async function scrapeWithBrowser(url, adapterName) {
     await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
     console.log('[Browser] Navegação concluída.');
 
-   
+  
     try {
       const cookieButtonSelector = 'button[data-testid="action:understood-button"]';
       await page.waitForSelector(cookieButtonSelector, { timeout: 5000 });
@@ -84,7 +70,7 @@ export async function scrapeWithBrowser(url, adapterName) {
       console.log('[Browser] Banner de cookies fechado.');
     } catch {}
 
-   
+    
     try {
       const cepCloseButtonSelector = 'button[aria-label*="Fechar"], button.andes-button--secondary';
       await page.waitForSelector(cepCloseButtonSelector, { timeout: 5000 });
@@ -104,13 +90,11 @@ export async function scrapeWithBrowser(url, adapterName) {
 
     const htmlContent = await page.content();
 
-    
     if (adapterName === 'mercadolivre.com.br' && !isProduction) {
       const htmlPath = path.resolve(__dirname, '..', 'debug_ml_content.html');
       await fs.writeFile(htmlPath, htmlContent);
     }
 
-    
     if (adapterName) {
       const adapterModule = await import(`../adapters/${adapterName}.js`);
       const adapter = adapterModule.default;

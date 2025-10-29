@@ -5,15 +5,13 @@ services:
     runtime: node
     plan: free
     branch: main
-    rootDir: backend   # pasta do backend
+    rootDir: backend   
     healthCheckPath: /health
     buildCommand: "npm install"
     startCommand: "npm start"
     envVars:
       - key: NODE_VERSION
         value: "22"
-    buildpacks:
-      - url: https://github.com/render-examples/puppeteer-chromium
 
   # Frontend Vite
   - type: web

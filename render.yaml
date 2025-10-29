@@ -5,7 +5,7 @@ services:
     runtime: node
     plan: free
     branch: main
-    rootDir: backend  # pasta do backend
+    rootDir: backend   # pasta do backend
     healthCheckPath: /health
     buildCommand: "npm install"
     startCommand: "npm start"
@@ -21,7 +21,7 @@ services:
     runtime: node
     plan: free
     branch: main
-    rootDir: frontend  # pasta do frontend
+    rootDir: frontend  
     buildCommand: "npm install && npm run build"
     startCommand: "npm run preview"
     envVars:
